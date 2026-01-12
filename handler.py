@@ -4,6 +4,8 @@ from diffusers import AutoPipelineForText2Image
 import base64
 import io
 
+import os
+
 # Load model globally so it stays in VRAM between requests
 # The model will be loaded from the cache populated by builder/model_fetcher.py
 print("Loading model...")
@@ -20,6 +22,14 @@ def handler(job):
     """
     job_input = job['input']
     
+    # Security: Check for API Key
+    # The API_KEY env var should be set in the RunPod Template or Environment Variables
+    expected_api_key = os.environ.get("API_KEY")
+    if expected_api_key:
+        input_api_key = job_input.get("api_key")
+        if input_api_key != expected_api_key:
+            return {"error": "Unauthorized: Invalid or missing 'api_key'"}
+
     # helper to validate input
     if 'prompt' not in job_input:
         return {"error": "Missing 'prompt' in input"}

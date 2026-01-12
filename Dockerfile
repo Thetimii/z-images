@@ -6,9 +6,13 @@ WORKDIR /
 # Install system dependencies if any (none strictly needed for basic run, but good practice to have clean env)
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install system dependencies
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
 # Copy requirements and install
 COPY requirements.txt .
-# using --no-cache-dir to keep image size slightly smaller, though the layers will be cached
+# using --no-cache-dir to keep image size slightly smaller
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
