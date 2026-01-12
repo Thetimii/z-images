@@ -1,27 +1,23 @@
 FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-devel
 
-# Set working directory
-WORKDIR /
-
-# Install system dependencies if any (none strictly needed for basic run, but good practice to have clean env)
+# Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies
-ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install
-COPY requirements.txt .
-# using --no-cache-dir to keep image size slightly smaller
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies
+RUN pip install --upgrade pip
+RUN pip install runpod diffusers transformers accelerate huggingface_hub
 
-# Copy the builder script -> This step caches the model weights in the image
+WORKDIR /
+
+# Copy the fetcher
 COPY builder/model_fetcher.py .
+
+# IMPORTANT: If the model is gated, your coder needs to pass the HF_TOKEN here
+# Or ensure the model is public.
 RUN python model_fetcher.py
 
-# Copy the handler
 COPY handler.py .
-
-# Start the handler
-CMD [ "python", "-u", "handler.py" ]
+CMD [ "python", "-u", "/handler.py" ]

@@ -4,16 +4,16 @@ import os
 
 def download_model():
     model_id = "Tongyi-MAI/Z-Image-Turbo"
-    print(f"Downloading model: {model_id}...")
     
-    # Download and cache the model
-    # We load it once to force the download to the default cache directory
-    pipe = AutoPipelineForText2Image.from_pretrained(
-        model_id,
+    # We download in FP16 to save space, but keep it on CPU during build
+    print(f"Downloading {model_id}...")
+    AutoPipelineForText2Image.from_pretrained(
+        model_id, 
         torch_dtype=torch.float16,
         variant="fp16",
+        use_safetensors=True
     )
-    print("Model successfully downloaded and cached.")
+    print("Download complete!")
 
 if __name__ == "__main__":
     download_model()
