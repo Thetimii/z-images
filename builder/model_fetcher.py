@@ -1,16 +1,14 @@
 import torch
-from diffusers import AutoPipelineForText2Image
-import os
+from diffusers import ZImagePipeline
 
 def download_model():
     model_id = "Tongyi-MAI/Z-Image-Turbo"
     
-    # We download in FP16 to save space, but keep it on CPU during build
+    # Download using ZImagePipeline (CPU-only during build)
     print(f"Downloading {model_id}...")
-    AutoPipelineForText2Image.from_pretrained(
+    ZImagePipeline.from_pretrained(
         model_id, 
-        torch_dtype=torch.float16,
-        variant="fp16",
+        torch_dtype=torch.bfloat16,
         use_safetensors=True
     )
     print("Download complete!")

@@ -1,44 +1,41 @@
 import runpod
 import torch
-from diffusers import AutoPipelineForText2Image
+from diffusers import ZImagePipeline
 import base64
 import io
-
 import os
 
-# Load model globally so it stays in VRAM between requests
-# The model will be loaded from the cache populated by builder/model_fetcher.py
-print("Loading model...")
-pipe = AutoPipelineForText2Image.from_pretrained(
+# Load model globally using ZImagePipeline
+print("Loading Z-Image-Turbo model...")
+pipe = ZImagePipeline.from_pretrained(
     "Tongyi-MAI/Z-Image-Turbo", 
-    torch_dtype=torch.float16, 
-    variant="fp16"
+    torch_dtype=torch.bfloat16,
+    use_safetensors=True
 ).to("cuda")
 print("Model loaded successfully.")
 
 def handler(job):
     """
-    Handler function that will be used to process jobs.
+    Handler function for RunPod serverless inference.
     """
     job_input = job['input']
     
     # Security: Check for API Key
-    # The API_KEY env var should be set in the RunPod Template or Environment Variables
     expected_api_key = os.environ.get("API_KEY")
     if expected_api_key:
         input_api_key = job_input.get("api_key")
         if input_api_key != expected_api_key:
             return {"error": "Unauthorized: Invalid or missing 'api_key'"}
 
-    # helper to validate input
+    # Validate input
     if 'prompt' not in job_input:
         return {"error": "Missing 'prompt' in input"}
         
     prompt = job_input['prompt']
     
-    # Optional parameters with defaults
-    num_inference_steps = job_input.get('num_inference_steps', 1) # Z-Image-Turbo is fast!
-    guidance_scale = job_input.get('guidance_scale', 0.0)
+    # Z-Image-Turbo optimal parameters
+    num_inference_steps = job_input.get('num_inference_steps', 8)  # 8-10 is optimal
+    guidance_scale = job_input.get('guidance_scale', 0.0)  # Must be 0.0 for turbo
     
     # Run inference
     with torch.inference_mode():

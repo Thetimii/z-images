@@ -1,23 +1,34 @@
-FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-devel
+FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
 
 # Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3-pip \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-RUN pip install --upgrade pip
-RUN pip install runpod diffusers transformers accelerate huggingface_hub
+# Upgrade pip
+RUN pip3 install --upgrade pip
+
+# Install PyTorch 2.5.1 with CUDA 12.4 support
+RUN pip3 install torch==2.5.1 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+
+# Install diffusers from source (required for ZImagePipeline)
+RUN pip3 install git+https://github.com/huggingface/diffusers.git
+
+# Install other dependencies
+RUN pip3 install runpod transformers accelerate sentencepiece protobuf
 
 WORKDIR /
 
 # Copy the fetcher
 COPY builder/model_fetcher.py .
 
-# IMPORTANT: If the model is gated, your coder needs to pass the HF_TOKEN here
-# Or ensure the model is public.
-RUN python model_fetcher.py
+# Download model during build
+RUN python3 model_fetcher.py
 
 COPY handler.py .
-CMD [ "python", "-u", "/handler.py" ]
+CMD [ "python3", "-u", "/handler.py" ]
