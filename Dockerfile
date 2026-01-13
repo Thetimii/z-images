@@ -20,7 +20,7 @@ RUN pip3 install torch==2.5.1 torchvision torchaudio --index-url https://downloa
 RUN pip3 install git+https://github.com/huggingface/diffusers.git
 
 # Install other dependencies
-RUN pip3 install runpod transformers accelerate sentencepiece protobuf
+RUN pip3 install runpod transformers accelerate sentencepiece protobuf supabase
 
 WORKDIR /
 
